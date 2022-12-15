@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 
+
 # from pathlib import Path
 
 # .datファイルを元に職員情報をもったオブジェクトを生成する

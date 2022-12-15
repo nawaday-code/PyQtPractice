@@ -2,6 +2,7 @@ import datetime
 import pandas as pd
 import math
 
+
 def config():
     #config
     fti = pd.read_table('radschedule\勤務表\data\configvar.dat')

@@ -6,6 +6,8 @@ from PyQt5.QtGui import *
 from assignMember import *
 
 
+
+
 class TableViewTestModel(QtCore.QAbstractTableModel):
     def __init__(self, members: list[Person], parent=None):
         super().__init__(parent)
