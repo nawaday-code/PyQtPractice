@@ -44,6 +44,36 @@ class Person:
     def toHeader():
         return Person.a_month_days
 
+    def getData4Shimizu():
+        #夜勤表表示用
+        #openFile.py を見て
+        pass
+
+    def getData4Iwasaki():
+        #勤務表カウント用
+        #
+        pass
+
+    def getData4Honda():
+        """
+            日付-veriant  日付 (yyyy-mm-dd)  日付+1
+        UID 勤務(Not int)
+            無いときはNone
+
+            日付-veriant  日付               日付+1
+        UID request(Not int)  request
+            無いときはNone
+
+            UID 職員ID name depf(モダリティ)
+        UID
+        """
+        pass
+
+
+# person = Person()
+
+
+
 class ShiftDataReader:
     @staticmethod
     def readConfigvar(datPath: str):
