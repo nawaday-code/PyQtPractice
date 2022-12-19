@@ -1,9 +1,7 @@
-from ast import Pass
 import calendar
 import datetime
 from dataclasses import dataclass
 from enum import Enum
-from inspect import _void
 
 import pandas as pd
 
@@ -68,6 +66,18 @@ class Members:
         pass
 
     def getDf4Honda(self):
+        """
+            日付-veriant  日付 (yyyy-mm-dd)  日付+1
+        UID 勤務(Not int)
+            無いときはNone
+
+            日付-veriant  日付               日付+1
+        UID request(Not int)  request
+            無いときはNone
+
+            UID 職員ID name depf(モダリティ)
+        UID
+        """
         pass
 
     def getDf4Iwasaki(self):
@@ -89,7 +99,7 @@ class CreateShiftInfo(Members):
         self.applyShift2Member()
         
 
-    def readConfigvar(self, datPath: str = '') -> _void:
+    def readConfigvar(self, datPath: str = ''):
         if (datPath == ''):
             datPath: str = self.rootPath + "\\" + datNames.configvar.value
         inputData = open(datPath, 'r', encoding='utf-8-sig')
@@ -118,7 +128,7 @@ class CreateShiftInfo(Members):
         self.a_month_days = [
             day for week in self.a_month_calendar for day in week if day > 0]
 
-    def readStaffInfo(self, datPath: str = '') -> _void:
+    def readStaffInfo(self, datPath: str = ''):
 
         if (datPath == ''):
             datPath: str = self.rootPath + "\\" + datNames.staffinfo.value
@@ -138,13 +148,14 @@ class CreateShiftInfo(Members):
         """
 
         for rows in inputData:
-            uid, staffid, name = rows.rstrip('\n').split(',')
-            self.addMember(Person(int(uid), staffid, name))
+            if(len(rows.rstrip('\n').split(',')) == 3):
+                uid, staffid, name = rows.rstrip('\n').split(',')
+                self.addMember(Person(int(uid), staffid, name))
             
         inputData.close()
 
 
-    def applyShift2Member(self, datPath: str = '') -> _void:
+    def applyShift2Member(self, datPath: str = ''):
 
         if (datPath == ''):
             datPath: str = self.rootPath + "\\" + datNames.shift.value
@@ -169,6 +180,11 @@ class CreateShiftInfo(Members):
                     
         inputData.close()
 
+class Validater:
+    #デコレータとして検証すべきか
+    #データの欠損を検証
+    def validateDataLen():
+        
 
     # @staticmethod
     # def member2PandasDataFrame(members: list[Person]):
@@ -176,3 +192,6 @@ class CreateShiftInfo(Members):
     #     for person in members:
     #         pd.DataFrame(person.jobPerDay)
     #     print(df)
+
+member = CreateShiftInfo('data')
+print(member.members[53])

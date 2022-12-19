@@ -15,8 +15,10 @@ class TableViewTestModel(QtCore.QAbstractTableModel):
         self.shiftInfo = shiftInfo
 
     def data(self, index: QtCore.QModelIndex, role: int):
-        if role == QtCore.Qt.EditRole or role == QtCore.Qt.ItemDataRole.DisplayRole:
+        if role == QtCore.Qt.ItemDataRole.EditRole or role == QtCore.Qt.ItemDataRole.DisplayRole:
+            print(str(index.row())+ ':' +str(index.column()))
             return self.members[index.row()].jobPerDay[index.column()+1]
+
             # return str(index.row())+ ':' +str(index.column())
         return QtCore.QVariant()
 
