@@ -1,9 +1,6 @@
-import sys
-# from PyQt5.QtCore import (Qt, QModelIndex, QAbstractTableModel)
 from PyQt5 import QtCore, QtWidgets
 
-from dataContainer import *
-
+from database.data import *
 
 # dataframeを受け取って表示するようにする
 # roleをeditableにして編集してみる
@@ -16,7 +13,7 @@ class TableViewTestModel(QtCore.QAbstractTableModel):
 
     def data(self, index: QtCore.QModelIndex, role: int):
         if role == QtCore.Qt.ItemDataRole.EditRole or role == QtCore.Qt.ItemDataRole.DisplayRole:
-            print(str(index.row())+ ':' +str(index.column()))
+            # print(str(index.row())+ ':' +str(index.column()))
             return self.members[index.row()].jobPerDay[index.column()+1]
 
             # return str(index.row())+ ':' +str(index.column())
@@ -50,9 +47,3 @@ class MainWindow(QtWidgets.QMainWindow):
         self.table.setModel(TableViewTestModel(shiftInfo))
 
 
-app = QtWidgets.QApplication(sys.argv)
-shiftInfo = CreateShiftInfo('data')
-testWindow = MainWindow(shiftInfo)
-testWindow.show()
-
-sys.exit(app.exec_())

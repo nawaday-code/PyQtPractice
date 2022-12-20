@@ -5,6 +5,8 @@ from enum import Enum
 
 import pandas as pd
 
+from decorator.validate import *
+
 
 # from pathlib import Path
 
@@ -18,7 +20,6 @@ import pandas as pd
 # "C:/Users/pelu0/Desktop/ShiftManager/request.dat"
 # "C:/Users/pelu0/Desktop/ShiftManager/previous.dat"
 
-
 class datNames(Enum):
     configvar = 'configvar.dat'
     staffinfo = 'staffinfo.dat'
@@ -26,6 +27,7 @@ class datNames(Enum):
     shift = 'shift.dat'
     request = 'request.dat'
     previous = 'previous.dat'
+
 
 
 @dataclass(slots=True)
@@ -97,7 +99,6 @@ class CreateShiftInfo(Members):
         self.readConfigvar()
         self.readStaffInfo()
         self.applyShift2Member()
-        
 
     def readConfigvar(self, datPath: str = ''):
         if (datPath == ''):
@@ -148,13 +149,13 @@ class CreateShiftInfo(Members):
         """
 
         for rows in inputData:
-            if(len(rows.rstrip('\n').split(',')) == 3):
+            if (len(rows.rstrip('\n').split(',')) == 3):
                 uid, staffid, name = rows.rstrip('\n').split(',')
                 self.addMember(Person(int(uid), staffid, name))
-            
+
         inputData.close()
 
-
+    @Validater.validJobPerDay
     def applyShift2Member(self, datPath: str = ''):
 
         if (datPath == ''):
@@ -173,25 +174,16 @@ class CreateShiftInfo(Members):
         """
         for rows in inputData:
             uid, day, job = rows.rstrip('\n').split(',')
+            # ここforで回さずに検索でマッチングできないか？
             for person in self.members:
                 if int(uid) == person.uid:
                     person.jobPerDay[self.a_month_days[int(day)]] = int(
                         job)
-                    
+
         inputData.close()
 
-class Validater:
-    #デコレータとして検証すべきか
-    #データの欠損を検証
-    def validateDataLen():
-        
+        return self
 
-    # @staticmethod
-    # def member2PandasDataFrame(members: list[Person]):
-    #     df = pd.DataFrame()
-    #     for person in members:
-    #         pd.DataFrame(person.jobPerDay)
-    #     print(df)
 
-member = CreateShiftInfo('data')
-print(member.members[53])
+# member = CreateShiftInfo('data')
+# print(member.members[53])
