@@ -16,8 +16,12 @@ class MemberType(PersonType):
 
     # 全職員で共通な情報
     date: datetime
-    a_month_calendar: list[list[int]]
-    a_month_days: list[int]
+
+    day_previous_next: list[tuple[int, int, int, int]]
+
+
+    # a_month_calendar: list[list[int]]
+    # a_month_days: list[int]
     
 
 class Validater:
@@ -29,18 +33,21 @@ class Validater:
     def validJobPerDay(func):
         def wrapper(*args, **kwargs):
             membersInfo: MemberType= func(*args, **kwargs)
-
             for person in membersInfo.members:
-                try:
-                    if len(person.jobPerDay) != len(membersInfo.a_month_days):
-                        raise damagedDataError()
-                except damagedDataError as _ex:
-                    # データ穴埋め
-                    person.jobPerDay = {
-                        day: None for day in membersInfo.a_month_days}
+                    for day in membersInfo.day_previous_next:
+                        try:
+                            person.jobPerDay[day]
+                            # if len(person.jobPerDay) != len(membersInfo.a_month_days):
+                            #     raise damagedDataError()
+                        except KeyError as _ex:
+                            # データ穴埋め
+                            person.jobPerDay[day] = None
+                            # person.jobPerDay = {
+                            #     day: None for day in membersInfo.a_month_days}
 
-                    print('欠損データはNoneで埋められました')
-                    print('対象名: '+person.name+' 職員ID: '+person.staffid)
+                            print('欠損データはNoneで埋められました')
+                            print(f'対象名: {person.name} 職員ID: {person.staffid}')
+                            print(f'日時: {day}')
 
             return membersInfo
         return wrapper

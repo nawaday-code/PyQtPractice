@@ -7,18 +7,8 @@ import pandas as pd
 
 from decorator.validate import *
 
-
-# from pathlib import Path
-
 # .datファイルを元に職員情報をもったオブジェクトを生成する
 
-# rootDataPath = Path('radschedule/勤務表/data')
-# C:/Users/pelu0/Desktop/ShiftManager/configvar.dat
-# "C:/Users/pelu0/Desktop/ShiftManager/staffinfo.dat"
-# "C:/Users/pelu0/Desktop/ShiftManager/converttable.dat"
-# "C:/Users/pelu0/Desktop/ShiftManager/shift.dat"
-# "C:/Users/pelu0/Desktop/ShiftManager/request.dat"
-# "C:/Users/pelu0/Desktop/ShiftManager/previous.dat"
 
 class datNames(Enum):
     configvar = 'configvar.dat'
@@ -27,7 +17,6 @@ class datNames(Enum):
     shift = 'shift.dat'
     request = 'request.dat'
     previous = 'previous.dat'
-
 
 
 @dataclass(slots=True)
@@ -51,20 +40,28 @@ class Members:
     members: list[Person]
 
     # 全職員で共通な情報
+    # 先月分データなどがあるため、a_month_daysは変更するべき。
+    # (year, month, day, dayofweek) のtupleにする
     date: datetime
-    a_month_calendar: list[list[int]]
-    a_month_days: list[int]
+    #                           [( 年,  月,  日, 曜日)]
+    day_previous_next: list[tuple[int, int, int, int]]
+
+    # a_month_calendar: list[list[int]] #つかわない
+    # a_month_days: list[int]
 
     def __init__(self):
         self.members = []
         self.date = None
-        self.a_month_calendar = None
-        self.a_month_days = None
+        self.day_previous_next = None
+
+        # self.a_month_calendar = None
+        # self.a_month_days = None
 
     def addMember(self, person: Person):
         self.members.append(person)
 
     def getDf4Shimizu(self):
+
         pass
 
     def getDf4Honda(self):
@@ -87,7 +84,7 @@ class Members:
 
     # 今は要らなそうだけど、後々ヘッダー用に簡単に編集できるように
     def toHeader(self):
-        return self.a_month_days
+        return self.day_previous_next
 
 
 class CreateShiftInfo(Members):
@@ -123,11 +120,23 @@ class CreateShiftInfo(Members):
         inputData.close()
 
         # 日付データを設定
-        self.date = datetime.datetime.strptime(*data['date'], '%Y/%m/%d')
-        self.a_month_calendar = calendar.monthcalendar(
-            self.date.year, self.date.month)
-        self.a_month_days = [
-            day for week in self.a_month_calendar for day in week if day > 0]
+        self.date: datetime.datetime = datetime.datetime.strptime(
+            *data['date'], '%Y/%m/%d')
+        cal = calendar.Calendar()
+        previous = [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month-1)]
+        now = [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month)]
+        next = [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month+1)]
+
+        self.day_previous_next = previous + now + next
+        # self.day_previous_next = list(set(
+        #     [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month-1)].extend(
+        #         [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month)].extend(
+        #             [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month+1)]))))
+
+        # self.a_month_calendar = calendar.monthcalendar(
+        #     self.date.year, self.date.month)
+        # self.a_month_days = [
+        #     day for week in self.a_month_calendar for day in week if day > 0]
 
     def readStaffInfo(self, datPath: str = ''):
 
@@ -155,12 +164,9 @@ class CreateShiftInfo(Members):
 
         inputData.close()
 
+    # 先月分とrequestは一括読み込みして、一部分だけほしいときは切り取るやり方にします
     @Validater.validJobPerDay
-    def applyShift2Member(self, datPath: str = ''):
-
-        if (datPath == ''):
-            datPath: str = self.rootPath + "\\" + datNames.shift.value
-        inputData = open(datPath, 'r', encoding='utf-8-sig')
+    def applyShift2Member(self, shiftPath: str = '', previousPath: str = '', requestPath: str = ''):
         # 次のようなデータ構造を想定しています
         """
         uid, day, job
@@ -172,18 +178,41 @@ class CreateShiftInfo(Members):
         2,5,8
         2,6,8
         """
-        for rows in inputData:
-            uid, day, job = rows.rstrip('\n').split(',')
-            # ここforで回さずに検索でマッチングできないか？
-            for person in self.members:
-                if int(uid) == person.uid:
-                    person.jobPerDay[self.a_month_days[int(day)]] = int(
-                        job)
 
-        inputData.close()
+        if (shiftPath == ''):
+            shiftPath: str = self.rootPath + "\\" + datNames.shift.value
+        if (previousPath == ''):
+            previousPath: str = self.rootPath + "\\" + datNames.previous.value
+        if (requestPath == ''):
+            requestPath: str = self.rootPath + "\\" + datNames.request.value
+        
+        self.dat2Member(shiftPath)
+        self.dat2Member(previousPath)
+        self.dat2Member(requestPath)
 
         return self
 
+    def dat2Member(self, path:str):
+        readDat = open(path, 'r', encoding='utf-8-sig')
+        for datRow in readDat:
+            uid, day, job = datRow.rstrip('\n').split(',')
+            # ここで得たdayは(yyyy, mm, dd, ww)に変換
+            try:
+                date = self.day2yyyymmddww(day)
+                if not date in self.day_previous_next:
+                    raise damagedDataError
+            except damagedDataError as _ex:
+                print('*.batのday部分に異常値がある恐れがあります。')
+                print(f'day部分変換後: {date}')
+                print('勤務データの格納に失敗しました。')
 
-# member = CreateShiftInfo('data')
-# print(member.members[53])
+            # ここforで回さずに検索でマッチングできないか？
+            for person in self.members:
+                if int(uid) == person.uid:
+                    person.jobPerDay[date] = int(job)
+        readDat.close()
+
+    def day2yyyymmddww(self, day) -> tuple[int, int, int, int]:
+        print(day)
+        yyyymmdd = (self.date.year, self.date.month, int(day)+1)
+        return (*yyyymmdd, datetime.date(*yyyymmdd).weekday())
