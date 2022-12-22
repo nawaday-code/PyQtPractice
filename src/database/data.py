@@ -1,12 +1,15 @@
 import calendar
 import datetime
 import locale
+import logging
 from dataclasses import dataclass
 from enum import Enum, auto
 
 import pandas as pd
 
 from decorator.validate import *
+
+logging.basicConfig(filename='log/data.log' ,level=logging.DEBUG)
 
 # .datファイルを元に職員情報をもったオブジェクトを生成する
 
@@ -190,9 +193,10 @@ class CreateShiftInfo(Members):
             requestPath: str = self.rootPath + "\\" + datNames.request.value
 
         #被りデータがあるので修正しないといけない
-        print(self.now_month)
-        print(self.previous_month)
-        print(self.next_month)
+        logging.debug(self.now_month)
+        logging.debug(self.previous_month)
+        logging.debug(self.next_month)
+
 
 
         self.dat2Member(shiftPath, self.now_month)
