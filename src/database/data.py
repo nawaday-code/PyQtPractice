@@ -1,7 +1,8 @@
 import calendar
 import datetime
+import locale
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, auto
 
 import pandas as pd
 
@@ -40,9 +41,11 @@ class Members:
     members: list[Person]
 
     # 全職員で共通な情報
-    # 先月分データなどがあるため、a_month_daysは変更するべき。
     # (year, month, day, dayofweek) のtupleにする
     date: datetime
+    previous_month: list[tuple[int, int, int, int]]
+    now_month: list[tuple[int, int, int, int]]
+    next_month: list[tuple[int, int, int, int]]
     #                           [( 年,  月,  日, 曜日)]
     day_previous_next: list[tuple[int, int, int, int]]
 
@@ -83,8 +86,14 @@ class Members:
         pass
 
     # 今は要らなそうだけど、後々ヘッダー用に簡単に編集できるように
-    def toHeader(self):
-        return self.day_previous_next
+    def toHeader(self) -> list[str]:
+        locale.setlocale(locale.LC_TIME, 'ja_JP')
+        return [datetime.date(*yyyymmddww[:3]).strftime('%x')+datetime.date(*yyyymmddww[:3]).strftime('%a')
+                for yyyymmddww in self.day_previous_next]
+
+    # def getWeekDay(self, yyyymmddww):
+    #     locale.setlocale(locale.LC_TIME, 'ja_JP')
+    #     return datetime.date(*yyyymmddww[:3]).strftime('%x')
 
 
 class CreateShiftInfo(Members):
@@ -123,20 +132,14 @@ class CreateShiftInfo(Members):
         self.date: datetime.datetime = datetime.datetime.strptime(
             *data['date'], '%Y/%m/%d')
         cal = calendar.Calendar()
-        previous = [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month-1)]
-        now = [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month)]
-        next = [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month+1)]
+        self.previous_month = [datetuple for datetuple in cal.itermonthdays4(
+            self.date.year, self.date.month-1)]
+        self.now_month = [datetuple for datetuple in cal.itermonthdays4(
+            self.date.year, self.date.month)]
+        self.next_month = [datetuple for datetuple in cal.itermonthdays4(
+            self.date.year, self.date.month+1)]
 
-        self.day_previous_next = previous + now + next
-        # self.day_previous_next = list(set(
-        #     [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month-1)].extend(
-        #         [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month)].extend(
-        #             [datetuple for datetuple in cal.itermonthdays4(self.date.year, self.date.month+1)]))))
-
-        # self.a_month_calendar = calendar.monthcalendar(
-        #     self.date.year, self.date.month)
-        # self.a_month_days = [
-        #     day for week in self.a_month_calendar for day in week if day > 0]
+        self.day_previous_next = self.previous_month + self.now_month + self.next_month
 
     def readStaffInfo(self, datPath: str = ''):
 
@@ -185,20 +188,27 @@ class CreateShiftInfo(Members):
             previousPath: str = self.rootPath + "\\" + datNames.previous.value
         if (requestPath == ''):
             requestPath: str = self.rootPath + "\\" + datNames.request.value
-        
-        self.dat2Member(shiftPath)
-        self.dat2Member(previousPath)
-        self.dat2Member(requestPath)
+
+        #被りデータがあるので修正しないといけない
+        print(self.now_month)
+        print(self.previous_month)
+        print(self.next_month)
+
+
+        self.dat2Member(shiftPath, self.now_month)
+        self.dat2Member(previousPath, self.previous_month)
+        self.dat2Member(requestPath, self.next_month)
 
         return self
 
-    def dat2Member(self, path:str):
+    def dat2Member(self, path: str, month_calendar: list[tuple[int, int, int, int]]):
         readDat = open(path, 'r', encoding='utf-8-sig')
         for datRow in readDat:
             uid, day, job = datRow.rstrip('\n').split(',')
             # ここで得たdayは(yyyy, mm, dd, ww)に変換
             try:
-                date = self.day2yyyymmddww(day)
+                date = month_calendar[int(day)]
+                # date = self.day2yyyymmddww(day)
                 if not date in self.day_previous_next:
                     raise damagedDataError
             except damagedDataError as _ex:
@@ -212,7 +222,10 @@ class CreateShiftInfo(Members):
                     person.jobPerDay[date] = int(job)
         readDat.close()
 
-    def day2yyyymmddww(self, day) -> tuple[int, int, int, int]:
-        print(day)
-        yyyymmdd = (self.date.year, self.date.month, int(day)+1)
-        return (*yyyymmdd, datetime.date(*yyyymmdd).weekday())
+    # dayの'-（マイナス）'データはindex指定として扱えば上手くいくはず
+    # calendarとdayを取得する
+    # def day2yyyymmddww(self, day) -> tuple[int, int, int, int]:
+
+    #     print(day)
+    #     yyyymmdd = (self.date.year, self.date.month, int(day)+1)
+    #     return (*yyyymmdd, datetime.date(*yyyymmdd).weekday())

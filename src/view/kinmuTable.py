@@ -5,30 +5,30 @@ from database.data import *
 # dataframeを受け取って表示するようにする
 # roleをeditableにして編集してみる
 
+
 class TableViewTestModel(QtCore.QAbstractTableModel):
     def __init__(self, shiftInfo: CreateShiftInfo, parent=None):
         super().__init__(parent)
-        self.members = shiftInfo.members
         self.shiftInfo = shiftInfo
 
     def data(self, index: QtCore.QModelIndex, role: int):
         if role == QtCore.Qt.ItemDataRole.EditRole or role == QtCore.Qt.ItemDataRole.DisplayRole:
             # print(str(index.row())+ ':' +str(index.column()))
-            return self.members[index.row()].jobPerDay[index.column()+1]
+            return self.shiftInfo.members[index.row()].jobPerDay[self.shiftInfo.day_previous_next[index.column()]]
 
             # return str(index.row())+ ':' +str(index.column())
         return QtCore.QVariant()
 
     def rowCount(self, parent=QtCore.QModelIndex()) -> int:
-        return len(self.members)
+        return len(self.shiftInfo.members)
 
     def columnCount(self, parent=QtCore.QModelIndex()) -> int:
-        return len(self.members[0].jobPerDay)
+        return len(self.shiftInfo.day_previous_next)
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int = QtCore.Qt.ItemDataRole.DisplayRole):
         if role == QtCore.Qt.ItemDataRole.DisplayRole:
             if orientation == QtCore.Qt.Orientation.Horizontal:
-                return self.shiftInfo.toHeader()
+                return self.shiftInfo.toHeader()[section]
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -45,5 +45,3 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resize(1500, 800)
 
         self.table.setModel(TableViewTestModel(shiftInfo))
-
-

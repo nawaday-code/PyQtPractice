@@ -30,7 +30,7 @@ class Validater:
     # データの欠損を検証
     # 汎用性がなく、いい書き方ではない
     @staticmethod
-    def validJobPerDay(func):
+    def validJobPerDay(func, logger:bool=False):
         def wrapper(*args, **kwargs):
             membersInfo: MemberType= func(*args, **kwargs)
             for person in membersInfo.members:
@@ -44,10 +44,10 @@ class Validater:
                             person.jobPerDay[day] = None
                             # person.jobPerDay = {
                             #     day: None for day in membersInfo.a_month_days}
-
-                            print('欠損データはNoneで埋められました')
-                            print(f'対象名: {person.name} 職員ID: {person.staffid}')
-                            print(f'日時: {day}')
+                            if(logger):
+                                print('欠損データはNoneで埋められました')
+                                print(f'対象名: {person.name} 職員ID: {person.staffid}')
+                                print(f'日時: {day}')
 
             return membersInfo
         return wrapper
