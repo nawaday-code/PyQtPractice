@@ -2,7 +2,7 @@ import sys
 # from PyQt5.QtCore import (Qt, QModelIndex, QAbstractTableModel)
 from PyQt5 import QtWidgets
 
-from database.data import *
+from database.datReader import *
 from view.kinmuTable import *
 
 app = QtWidgets.QApplication(sys.argv)

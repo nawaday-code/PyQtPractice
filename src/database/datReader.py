@@ -1,15 +1,12 @@
 import calendar
 import datetime
-import locale
 import logging
-from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum
 
-import pandas as pd
-
+from database.member import *
 from decorator.validate import *
 
-logging.basicConfig(filename='log/data.log' ,level=logging.DEBUG)
+logging.basicConfig(filename='log/data.log', level=logging.DEBUG)
 
 # .datファイルを元に職員情報をもったオブジェクトを生成する
 
@@ -21,83 +18,6 @@ class datNames(Enum):
     shift = 'shift.dat'
     request = 'request.dat'
     previous = 'previous.dat'
-
-
-@dataclass(slots=True)
-class Person:
-
-    # 個人の情報
-    uid: int
-    staffid: str
-    name: str
-    jobPerDay: dict
-
-    def __init__(self, uid: int, staffid: str, name: str) -> None:
-        self.uid = uid
-        self.staffid = staffid
-        self.name = name
-        self.jobPerDay = {}
-
-
-@dataclass(slots=True)
-class Members:
-    members: list[Person]
-
-    # 全職員で共通な情報
-    # (year, month, day, dayofweek) のtupleにする
-    date: datetime
-    previous_month: list[tuple[int, int, int, int]]
-    now_month: list[tuple[int, int, int, int]]
-    next_month: list[tuple[int, int, int, int]]
-    #                           [( 年,  月,  日, 曜日)]
-    day_previous_next: list[tuple[int, int, int, int]]
-
-    # a_month_calendar: list[list[int]] #つかわない
-    # a_month_days: list[int]
-
-    def __init__(self):
-        self.members = []
-        self.date = None
-        self.day_previous_next = None
-
-        # self.a_month_calendar = None
-        # self.a_month_days = None
-
-    def addMember(self, person: Person):
-        self.members.append(person)
-
-    def getDf4Shimizu(self):
-
-        pass
-
-    def getDf4Honda(self):
-        """
-            日付-veriant  日付 (yyyy-mm-dd)  日付+1
-        UID 勤務(Not int)
-            無いときはNone
-
-            日付-veriant  日付               日付+1
-        UID request(Not int)  request
-            無いときはNone
-
-            UID 職員ID name depf(モダリティ)
-        UID
-        """
-        pass
-
-    def getDf4Iwasaki(self):
-        pass
-
-    # 今は要らなそうだけど、後々ヘッダー用に簡単に編集できるように
-    def toHeader(self) -> list[str]:
-        locale.setlocale(locale.LC_TIME, 'ja_JP')
-        return [datetime.date(*yyyymmddww[:3]).strftime('%x')+datetime.date(*yyyymmddww[:3]).strftime('%a')
-                for yyyymmddww in self.day_previous_next]
-
-    # def getWeekDay(self, yyyymmddww):
-    #     locale.setlocale(locale.LC_TIME, 'ja_JP')
-    #     return datetime.date(*yyyymmddww[:3]).strftime('%x')
-
 
 class CreateShiftInfo(Members):
     rootPath: str
@@ -136,11 +56,11 @@ class CreateShiftInfo(Members):
             *data['date'], '%Y/%m/%d')
         cal = calendar.Calendar()
         self.previous_month = [datetuple for datetuple in cal.itermonthdays4(
-            self.date.year, self.date.month-1)]
+            self.date.year, self.date.month-1) if datetuple[1] == self.date.month - 1]
         self.now_month = [datetuple for datetuple in cal.itermonthdays4(
-            self.date.year, self.date.month)]
+            self.date.year, self.date.month) if datetuple[1] == self.date.month]
         self.next_month = [datetuple for datetuple in cal.itermonthdays4(
-            self.date.year, self.date.month+1)]
+            self.date.year, self.date.month+1) if datetuple[1] == self.date.month + 1]
 
         self.day_previous_next = self.previous_month + self.now_month + self.next_month
 
@@ -192,13 +112,6 @@ class CreateShiftInfo(Members):
         if (requestPath == ''):
             requestPath: str = self.rootPath + "\\" + datNames.request.value
 
-        #被りデータがあるので修正しないといけない
-        logging.debug(self.now_month)
-        logging.debug(self.previous_month)
-        logging.debug(self.next_month)
-
-
-
         self.dat2Member(shiftPath, self.now_month)
         self.dat2Member(previousPath, self.previous_month)
         self.dat2Member(requestPath, self.next_month)
@@ -209,10 +122,10 @@ class CreateShiftInfo(Members):
         readDat = open(path, 'r', encoding='utf-8-sig')
         for datRow in readDat:
             uid, day, job = datRow.rstrip('\n').split(',')
-            # ここで得たdayは(yyyy, mm, dd, ww)に変換
             try:
+                # ここで得たdayは(yyyy, mm, dd, ww)に変換
+                # dayの'-（マイナス）'データはindex指定として扱えば上手くいくはず
                 date = month_calendar[int(day)]
-                # date = self.day2yyyymmddww(day)
                 if not date in self.day_previous_next:
                     raise damagedDataError
             except damagedDataError as _ex:
@@ -223,13 +136,5 @@ class CreateShiftInfo(Members):
             # ここforで回さずに検索でマッチングできないか？
             for person in self.members:
                 if int(uid) == person.uid:
-                    person.jobPerDay[date] = int(job)
+                    person.jobPerDay[date] = job
         readDat.close()
-
-    # dayの'-（マイナス）'データはindex指定として扱えば上手くいくはず
-    # calendarとdayを取得する
-    # def day2yyyymmddww(self, day) -> tuple[int, int, int, int]:
-
-    #     print(day)
-    #     yyyymmdd = (self.date.year, self.date.month, int(day)+1)
-    #     return (*yyyymmdd, datetime.date(*yyyymmdd).weekday())
