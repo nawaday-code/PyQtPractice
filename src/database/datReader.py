@@ -121,17 +121,23 @@ class CreateShiftInfo(Members):
     def dat2Member(self, path: str, month_calendar: list[tuple[int, int, int, int]]):
         readDat = open(path, 'r', encoding='utf-8-sig')
         for datRow in readDat:
-            uid, day, job = datRow.rstrip('\n').split(',')
             try:
+                uid, day, job = datRow.rstrip('\n').split(',')
                 # ここで得たdayは(yyyy, mm, dd, ww)に変換
                 # dayの'-（マイナス）'データはindex指定として扱えば上手くいくはず
                 date = month_calendar[int(day)]
                 if not date in self.day_previous_next:
                     raise damagedDataError
+
             except damagedDataError as _ex:
                 print('*.batのday部分に異常値がある恐れがあります。')
                 print(f'day部分変換後: {date}')
                 print('勤務データの格納に失敗しました。')
+                continue
+
+            except Exception as ex:
+                print(f'異常なデータがありました: {ex}')
+                continue
 
             # ここforで回さずに検索でマッチングできないか？
             for person in self.members:

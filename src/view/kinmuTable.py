@@ -55,9 +55,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.resize(1500, 800)
         
-        delButton = QPushButton('取得')
+        # button = QtWidgets.QPushButton('testbutton')
+        self.view.doubleClicked.connect(self.selectedCell)
+        
         
 
 
     def selectedCell(self):
         logging.debug(self.view.selectedIndexes())
+        print('clicked')
