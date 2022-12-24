@@ -36,6 +36,11 @@ class Members:
 
     def addMember(self, person: Person):
         self.members.append(person)
+        
+    def toHeader(self) -> list[str]:
+        locale.setlocale(locale.LC_TIME, 'ja_JP')
+        return [datetime.date(*yyyymmddww[:3]).strftime('%x')+datetime.date(*yyyymmddww[:3]).strftime('%a')
+                for yyyymmddww in self.day_previous_next]
 
     def getDf4Shimizu(self):
 
@@ -59,7 +64,4 @@ class Members:
     def getDf4Iwasaki(self):
         pass
 
-    def toHeader(self) -> list[str]:
-        locale.setlocale(locale.LC_TIME, 'ja_JP')
-        return [datetime.date(*yyyymmddww[:3]).strftime('%x')+datetime.date(*yyyymmddww[:3]).strftime('%a')
-                for yyyymmddww in self.day_previous_next]
+

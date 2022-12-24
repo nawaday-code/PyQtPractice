@@ -137,6 +137,7 @@ class CreateShiftInfo(Members):
 
             except Exception as ex:
                 print(f'異常なデータがありました: {ex}')
+                print('スキップして次を読み込みます...')
                 continue
 
             # ここforで回さずに検索でマッチングできないか？

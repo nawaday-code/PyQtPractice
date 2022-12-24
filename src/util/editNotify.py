@@ -1,4 +1,4 @@
-
+#多分つかわない↓
 """
 デコレータで
 編集宣言
@@ -29,3 +29,14 @@ modelにdataを格納<-ここに関数をはさむか
     (比較抽出した変更部分のindexのみDfを変更する)
 
 """
+
+
+from database.model import TestModel
+
+
+class ModelEditor(TestModel):
+    def __init__(self, parent=None, shiftInfo=None):
+        super().__init__(self, parent=None, shiftInfo=None)
+        
+    
+
