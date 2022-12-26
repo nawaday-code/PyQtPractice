@@ -6,12 +6,12 @@ import logging
 
 from PyQt5.QtCore import *
 
-
-from util.datReader import CreateShiftInfo
+from util.valueEditor import ModelDataEditor
+from util.datReader import DatReader
 
 
 class TestModel(QAbstractTableModel):
-    shiftInfo: CreateShiftInfo
+    shiftInfo: DatReader
 
     def __init__(self, parent=None, shiftInfo=None):
         super().__init__(parent)
@@ -38,9 +38,10 @@ class TestModel(QAbstractTableModel):
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
         if role == Qt.ItemDataRole.EditRole:
+            ModelDataEditor.preValue = value
             self.shiftInfo.members[index.row(
-            )].jobPerDay[self.shiftInfo.day_previous_next[index.column()]] = value
+            )].jobPerDay[self.shiftInfo.day_previous_next[index.column()]] = ModelDataEditor.getPostValue()
             print(
-                f'データを編集しました。箇所：({index.row()}, {index.column()}) 変更後：{self.shiftInfo.members[index.row()].jobPerDay[self.shiftInfo.day_previous_next[index.column()]]}')
+                f'データを編集しました。\n箇所: ({index.row()}, {index.column()})\n変更後: {self.shiftInfo.members[index.row()].jobPerDay[self.shiftInfo.day_previous_next[index.column()]]}')
             return True
         return False

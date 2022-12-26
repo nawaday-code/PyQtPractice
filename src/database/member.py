@@ -25,10 +25,10 @@ class Members:
     # 全職員で共通な情報
     # (year, month, day, dayofweek) のtupleにする
     date: datetime
+    #                        [( 年,  月,  日, 曜日)]
     previous_month: list[tuple[int, int, int, int]]
     now_month: list[tuple[int, int, int, int]]
     next_month: list[tuple[int, int, int, int]]
-    #                           [( 年,  月,  日, 曜日)]
     day_previous_next: list[tuple[int, int, int, int]]
 
     def __init__(self):
@@ -42,26 +42,5 @@ class Members:
         return [datetime.date(*yyyymmddww[:3]).strftime('%x')+datetime.date(*yyyymmddww[:3]).strftime('%a')
                 for yyyymmddww in self.day_previous_next]
 
-    def getDf4Shimizu(self):
-
-        pass
-
-    def getDf4Honda(self):
-        """
-            日付-veriant  日付 (yyyy-mm-dd)  日付+1
-        UID 勤務(Not int)
-            無いときはNone
-
-            日付-veriant  日付               日付+1
-        UID request(Not int)  request
-            無いときはNone
-
-            UID 職員ID name depf(モダリティ)
-        UID
-        """
-        pass
-
-    def getDf4Iwasaki(self):
-        pass
 
 

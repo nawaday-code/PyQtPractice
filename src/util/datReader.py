@@ -11,7 +11,7 @@ logging.basicConfig(filename='log/data.log', level=logging.DEBUG)
 # .datファイルを元に職員情報をもったオブジェクトを生成する
 
 
-class datNames(Enum):
+class DatNames(Enum):
     configvar = 'configvar.dat'
     staffinfo = 'staffinfo.dat'
     converttable = 'converttable.dat'
@@ -19,8 +19,7 @@ class datNames(Enum):
     request = 'request.dat'
     previous = 'previous.dat'
 
-class CreateShiftInfo(Members):
-    rootPath: str
+class DatReader(Members):
 
     def __init__(self, rootPath: str):
         super().__init__()
@@ -31,7 +30,7 @@ class CreateShiftInfo(Members):
 
     def readConfigvar(self, datPath: str = ''):
         if (datPath == ''):
-            datPath: str = self.rootPath + "\\" + datNames.configvar.value
+            datPath: str = self.rootPath + "\\" + DatNames.configvar.value
         inputData = open(datPath, 'r', encoding='utf-8-sig')
         data = {}
         # 次のようなデータ構造を想定しています
@@ -67,7 +66,7 @@ class CreateShiftInfo(Members):
     def readStaffInfo(self, datPath: str = ''):
 
         if (datPath == ''):
-            datPath: str = self.rootPath + "\\" + datNames.staffinfo.value
+            datPath: str = self.rootPath + "\\" + DatNames.staffinfo.value
         inputData = open(datPath, 'r', encoding='utf-8-sig')
         # 次のようなデータ構造を想定しています
         """
@@ -106,11 +105,11 @@ class CreateShiftInfo(Members):
         """
 
         if (shiftPath == ''):
-            shiftPath: str = self.rootPath + "\\" + datNames.shift.value
+            shiftPath: str = self.rootPath + "\\" + DatNames.shift.value
         if (previousPath == ''):
-            previousPath: str = self.rootPath + "\\" + datNames.previous.value
+            previousPath: str = self.rootPath + "\\" + DatNames.previous.value
         if (requestPath == ''):
-            requestPath: str = self.rootPath + "\\" + datNames.request.value
+            requestPath: str = self.rootPath + "\\" + DatNames.request.value
 
         self.dat2Member(shiftPath, self.now_month)
         self.dat2Member(previousPath, self.previous_month)
@@ -136,8 +135,7 @@ class CreateShiftInfo(Members):
                 continue
 
             except Exception as ex:
-                print(f'異常なデータがありました: {ex}')
-                print('スキップして次を読み込みます...')
+                print(f'異常なデータがありました\n詳細: {ex}\nスキップして次を読み込みます...')
                 continue
 
             # ここforで回さずに検索でマッチングできないか？
