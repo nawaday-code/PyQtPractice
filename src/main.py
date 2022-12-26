@@ -1,4 +1,5 @@
 import sys
+from util.dataSender import DataName
 
 
 from util.shiftDataController import ShiftDataController
@@ -16,11 +17,14 @@ model = TestModel(shiftInfo=shiftInfo)
 
 def myFunc()->str:
     print('オリジナル編集有効化')
-    return ModelDataEditor.preValue + 'かもよ'
+    return ModelDataEditor.preValue + 'だと思う'
 
 ModelDataEditor.callbackFunc = myFunc
 delegate = modelEditDelegate()
 
+shiftInfo.getKinmuForm(DataName.kinmu)
+shiftInfo.getStaffInfo()
+shiftInfo.getYakinForm()
 
 testWindow = MainWindow(view, model, delegate)
 testWindow.show()

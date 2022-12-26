@@ -2,6 +2,7 @@ import calendar
 import datetime
 import logging
 from enum import Enum
+from uuid import uuid4
 
 from database.member import *
 from decorator.validate import *
@@ -18,6 +19,7 @@ class DatNames(Enum):
     shift = 'shift.dat'
     request = 'request.dat'
     previous = 'previous.dat'
+    Nrdeptcore = 'Nrdeptcore.dat'
 
 class DatReader(Members):
 
@@ -27,11 +29,15 @@ class DatReader(Members):
         self.readConfigvar()
         self.readStaffInfo()
         self.applyShift2Member()
+        self.readNrdeptcore()
 
     def readConfigvar(self, datPath: str = ''):
-        if (datPath == ''):
-            datPath: str = self.rootPath + "\\" + DatNames.configvar.value
-        inputData = open(datPath, 'r', encoding='utf-8-sig')
+        try:
+            inputData = open(datPath, 'r', encoding='utf-8-sig')
+        except FileNotFoundError as ex:
+            inputData = open(self.rootPath + "\\" +
+                             DatNames.configvar.value, 'r', encoding='utf-8-sig')
+            
         data = {}
         # 次のようなデータ構造を想定しています
         """
@@ -44,8 +50,8 @@ class DatReader(Members):
         epsilon,5
         lambda,0.1,0.01,0.01,0.001,0.1
         """
-        for rows in inputData:
-            elem = rows.rstrip('\n').split(',')
+        for row in inputData:
+            elem = row.rstrip('\n').split(',')
             data[elem[0]] = elem[1:]
 
         inputData.close()
@@ -61,13 +67,15 @@ class DatReader(Members):
         self.next_month = [datetuple for datetuple in cal.itermonthdays4(
             self.date.year, self.date.month+1) if datetuple[1] == self.date.month + 1]
 
-        self.day_previous_next = self.previous_month + self.now_month + self.next_month
+        self.day_previous_next = self.previous_month + self.now_month + [self.next_month[0]]
 
     def readStaffInfo(self, datPath: str = ''):
 
-        if (datPath == ''):
-            datPath: str = self.rootPath + "\\" + DatNames.staffinfo.value
-        inputData = open(datPath, 'r', encoding='utf-8-sig')
+        try:
+            inputData = open(datPath, 'r', encoding='utf-8-sig')
+        except FileNotFoundError as ex:
+            inputData = open(self.rootPath + "\\" +
+                             DatNames.staffinfo.value, 'r', encoding='utf-8-sig')
         # 次のようなデータ構造を想定しています
         """
         uid, staffid, name
@@ -82,10 +90,13 @@ class DatReader(Members):
         11,109876,平田聡
         """
 
-        for rows in inputData:
-            if (len(rows.rstrip('\n').split(',')) == 3):
-                uid, staffid, name = rows.rstrip('\n').split(',')
-                self.addMember(Person(int(uid), staffid, name))
+        for row in inputData:
+            try:
+                uid, staffid, name = row.rstrip('\n').split(',')
+                self.members[int(uid)] = Person(staffid, name)
+            except ValueError as ex:
+                print(f'異常なデータがありました\n詳細: {ex}\nスキップして次を読み込みます...')
+                continue
 
         inputData.close()
 
@@ -104,42 +115,81 @@ class DatReader(Members):
         2,6,8
         """
 
-        if (shiftPath == ''):
-            shiftPath: str = self.rootPath + "\\" + DatNames.shift.value
-        if (previousPath == ''):
-            previousPath: str = self.rootPath + "\\" + DatNames.previous.value
-        if (requestPath == ''):
-            requestPath: str = self.rootPath + "\\" + DatNames.request.value
-
-        self.dat2Member(shiftPath, self.now_month)
-        self.dat2Member(previousPath, self.previous_month)
-        self.dat2Member(requestPath, self.next_month)
+        self.dat2Member(DatNames.shift, self.now_month)
+        self.dat2Member(DatNames.previous, self.previous_month)
+        self.dat2Member(DatNames.request, self.now_month)
 
         return self
 
-    def dat2Member(self, path: str, month_calendar: list[tuple[int, int, int, int]]):
-        readDat = open(path, 'r', encoding='utf-8-sig')
-        for datRow in readDat:
+    def dat2Member(self, readDatName: DatNames, month_calendar: list[tuple[int, int, int, int]], datPath=''):
+        try:
+            readingDat = open(datPath, 'r', encoding='utf-8-sig')
+        except FileNotFoundError as ex:
+            readingDat = open(self.rootPath + "\\" +
+                              readDatName.value, 'r', encoding='utf-8-sig')
+
+        for row in readingDat:
             try:
-                uid, day, job = datRow.rstrip('\n').split(',')
+                uid, day, job = row.rstrip('\n').split(',')
                 # ここで得たdayは(yyyy, mm, dd, ww)に変換
                 # dayの'-（マイナス）'データはindex指定として扱えば上手くいくはず
                 date = month_calendar[int(day)]
                 if not date in self.day_previous_next:
                     raise damagedDataError
 
-            except damagedDataError as _ex:
-                print('*.batのday部分に異常値がある恐れがあります。')
-                print(f'day部分変換後: {date}')
-                print('勤務データの格納に失敗しました。')
+            except damagedDataError as ex:
+                print(
+                    '*.datのdayがカレンダーと一致しませんでした。\n詳細: {ex}\nスキップして次を読み込みます...')
                 continue
 
-            except Exception as ex:
+            except ValueError as ex:
                 print(f'異常なデータがありました\n詳細: {ex}\nスキップして次を読み込みます...')
                 continue
 
-            # ここforで回さずに検索でマッチングできないか？
-            for person in self.members:
-                if int(uid) == person.uid:
-                    person.jobPerDay[date] = job
-        readDat.close()
+            if readDatName == DatNames.shift or readDatName == DatNames.previous:
+                try:
+                    self.members[int(uid)].jobPerDay[date] = job
+                except KeyError as ex:
+                    self.members[int(uid)] = Person(uuid4(), f'dummy{uid}')
+                    self.members[int(uid)].jobPerDay[date] = job
+            elif readDatName == DatNames.request:
+                try:
+                    self.members[int(uid)].requestPerDay[date] = job
+                except KeyError as ex:
+                    self.members[int(uid)] = Person(uuid4(), f'dummy{uid}')
+                    self.members[int(uid)].requestPerDay[date] = job
+            
+
+            
+
+        readingDat.close()
+        
+    def readNrdeptcore(self, datPath:str = ''):
+        try:
+            inputData = open(datPath, 'r', encoding='utf-8-sig')
+        except FileNotFoundError as ex:
+            inputData = open(self.rootPath + "\\" +
+                             DatNames.Nrdeptcore.value, 'r', encoding='utf-8-sig')
+            
+        """
+        次のようなデータ構造を想定しています
+        
+        uid, dept
+        2,MR,0,2,1,2,0,0,0,2,0,0,0
+        4,RT,6,0,0,0,0,0,0,0,0,0,0
+        98,KS,0,0,0,2,0,0,0,0,0,0,0
+        97,XO,0,0,0,0,0,0,0,2,0,0,0
+        96,AG,0,0,0,0,0,0,0,0,2,0,0
+        5,FR,2,0,1,2,0,1,0,2,0,0,0
+        6,XP,0,0,0,0,0,6,6,2,0,0,0
+        7,AG,0,0,0,0,0,0,0,2,6,0,0
+        8,XO,0,0,0,0,0,1,6,6,0,0,0
+        """
+            
+        for row in inputData:
+            elem = row.rstrip('\n').split(',')
+            self.members[int(elem[0])].dept = elem[1]
+            
+        inputData.close()
+            
+            
