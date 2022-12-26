@@ -1,4 +1,5 @@
 import sys
+from util.dataSender import DataName
 
 
 from util.shiftDataController import ShiftDataController
@@ -21,7 +22,9 @@ def myFunc()->str:
 ModelDataEditor.callbackFunc = myFunc
 delegate = modelEditDelegate()
 
-shiftInfo.getKinmuDf()
+shiftInfo.getKinmuForm(DataName.kinmu)
+shiftInfo.getStaffInfo()
+shiftInfo.getYakinForm()
 
 testWindow = MainWindow(view, model, delegate)
 testWindow.show()

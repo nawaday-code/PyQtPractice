@@ -20,5 +20,3 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.resize(1500, 800)
 
-    def selectedCell(self):
-        logging.debug(self.view.selectedIndexes())

@@ -15,7 +15,8 @@ class TestModel(QAbstractTableModel):
 
     def data(self, index: QModelIndex, role: int):
         if role == Qt.ItemDataRole.EditRole or role == Qt.ItemDataRole.DisplayRole:
-            return self.shiftInfo.members[index.row()].jobPerDay[self.shiftInfo.day_previous_next[index.column()]]
+            
+            return self.shiftInfo.members[list(self.shiftInfo.members.keys())[index.row()]].jobPerDay[self.shiftInfo.day_previous_next[index.column()]]
         return QVariant()
 
     def rowCount(self, parent=QModelIndex()) -> int:
@@ -35,8 +36,8 @@ class TestModel(QAbstractTableModel):
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
         if role == Qt.ItemDataRole.EditRole:
             ModelDataEditor.preValue = value
-            self.shiftInfo.members[index.row(
-            )].jobPerDay[self.shiftInfo.day_previous_next[index.column()]] = ModelDataEditor.getPostValue()
+            self.shiftInfo.members[list(self.shiftInfo.members.keys())[index.row(
+            )]].jobPerDay[self.shiftInfo.day_previous_next[index.column()]] = ModelDataEditor.getPostValue()
             print(
                 f'データを編集しました。\n箇所: ({index.row()}, {index.column()})\n変更後: {self.shiftInfo.members[index.row()].jobPerDay[self.shiftInfo.day_previous_next[index.column()]]}')
             return True
