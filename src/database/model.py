@@ -1,17 +1,13 @@
-# QTableViewモデルで構築　モデルに入れるDataはPandas DataFrame
-# 清水さんのプログラムもQTableViewを使用している
-
-# data.pyは保存しておく。後々やっぱりpandasが使えない状況のために。
 import logging
 
 from PyQt5.QtCore import *
 
+from util.shiftDataController import ShiftDataController
 from util.valueEditor import ModelDataEditor
-from util.datReader import DatReader
 
 
 class TestModel(QAbstractTableModel):
-    shiftInfo: DatReader
+    shiftInfo: ShiftDataController
 
     def __init__(self, parent=None, shiftInfo=None):
         super().__init__(parent)

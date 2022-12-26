@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import datetime
-import locale
 
 @dataclass(slots=True)
 class Person:
@@ -10,12 +9,14 @@ class Person:
     staffid: str
     name: str
     jobPerDay: dict
+    requestPerDay : dict
 
     def __init__(self, uid: int, staffid: str, name: str) -> None:
         self.uid = uid
         self.staffid = staffid
         self.name = name
         self.jobPerDay = {}
+        self.requestPerDay = {}
 
 
 @dataclass(slots=True)
@@ -37,10 +38,7 @@ class Members:
     def addMember(self, person: Person):
         self.members.append(person)
         
-    def toHeader(self) -> list[str]:
-        locale.setlocale(locale.LC_TIME, 'ja_JP')
-        return [datetime.date(*yyyymmddww[:3]).strftime('%x')+datetime.date(*yyyymmddww[:3]).strftime('%a')
-                for yyyymmddww in self.day_previous_next]
+
 
 
 

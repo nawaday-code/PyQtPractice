@@ -16,11 +16,12 @@ model = TestModel(shiftInfo=shiftInfo)
 
 def myFunc()->str:
     print('オリジナル編集有効化')
-    return ModelDataEditor.preValue + 'かもよ'
+    return ModelDataEditor.preValue + 'だと思う'
 
 ModelDataEditor.callbackFunc = myFunc
 delegate = modelEditDelegate()
 
+shiftInfo.getKinmuDf()
 
 testWindow = MainWindow(view, model, delegate)
 testWindow.show()

@@ -19,6 +19,7 @@ class DatNames(Enum):
     request = 'request.dat'
     previous = 'previous.dat'
 
+
 class DatReader(Members):
 
     def __init__(self, rootPath: str):
@@ -61,7 +62,7 @@ class DatReader(Members):
         self.next_month = [datetuple for datetuple in cal.itermonthdays4(
             self.date.year, self.date.month+1) if datetuple[1] == self.date.month + 1]
 
-        self.day_previous_next = self.previous_month + self.now_month + self.next_month
+        self.day_previous_next = self.previous_month + self.now_month + [self.next_month[0]]
 
     def readStaffInfo(self, datPath: str = ''):
 
@@ -104,22 +105,18 @@ class DatReader(Members):
         2,6,8
         """
 
-        if (shiftPath == ''):
-            shiftPath: str = self.rootPath + "\\" + DatNames.shift.value
-        if (previousPath == ''):
-            previousPath: str = self.rootPath + "\\" + DatNames.previous.value
-        if (requestPath == ''):
-            requestPath: str = self.rootPath + "\\" + DatNames.request.value
-
-        self.dat2Member(shiftPath, self.now_month)
-        self.dat2Member(previousPath, self.previous_month)
-        self.dat2Member(requestPath, self.next_month)
+        self.dat2Member(DatNames.shift, self.now_month)
+        self.dat2Member(DatNames.previous, self.previous_month)
+        self.dat2Member(DatNames.request, self.now_month)
 
         return self
 
-    def dat2Member(self, path: str, month_calendar: list[tuple[int, int, int, int]]):
-        readDat = open(path, 'r', encoding='utf-8-sig')
-        for datRow in readDat:
+    def dat2Member(self, readDatName: DatNames, month_calendar: list[tuple[int, int, int, int]], optionPathSetting=''):
+        if (optionPathSetting == ''):
+            path: str = self.rootPath + "\\" + readDatName.value
+        readingDat = open(path, 'r', encoding='utf-8-sig')
+
+        for datRow in readingDat:
             try:
                 uid, day, job = datRow.rstrip('\n').split(',')
                 # ここで得たdayは(yyyy, mm, dd, ww)に変換
@@ -128,18 +125,20 @@ class DatReader(Members):
                 if not date in self.day_previous_next:
                     raise damagedDataError
 
-            except damagedDataError as _ex:
-                print('*.batのday部分に異常値がある恐れがあります。')
-                print(f'day部分変換後: {date}')
-                print('勤務データの格納に失敗しました。')
+            except damagedDataError as ex:
+                print(
+                    '*.datのdayがカレンダーと一致しませんでした。\n詳細: {ex}\nスキップして次を読み込みます...')
                 continue
 
-            except Exception as ex:
+            except ValueError as ex:
                 print(f'異常なデータがありました\n詳細: {ex}\nスキップして次を読み込みます...')
                 continue
 
             # ここforで回さずに検索でマッチングできないか？
             for person in self.members:
                 if int(uid) == person.uid:
-                    person.jobPerDay[date] = job
-        readDat.close()
+                    if readDatName == DatNames.shift or readDatName == DatNames.previous:
+                        person.jobPerDay[date] = job
+                    elif readDatName == DatNames.request:
+                        person.requestPerDay[date] = job
+        readingDat.close()
