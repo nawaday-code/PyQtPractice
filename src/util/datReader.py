@@ -4,7 +4,9 @@ import logging
 from enum import Enum
 from uuid import uuid4
 
+
 from database.member import *
+from decorator.convertTable import ConvertTable
 from decorator.validate import *
 
 logging.basicConfig(filename='log/data.log', level=logging.DEBUG)
@@ -15,11 +17,12 @@ logging.basicConfig(filename='log/data.log', level=logging.DEBUG)
 class DatNames(Enum):
     configvar = 'configvar.dat'
     staffinfo = 'staffinfo.dat'
-    converttable = 'converttable.dat'
+    convertTable = 'converttable.dat'
     shift = 'shift.dat'
     request = 'request.dat'
     previous = 'previous.dat'
     Nrdeptcore = 'Nrdeptcore.dat'
+
 
 class DatReader(Members):
 
@@ -30,17 +33,10 @@ class DatReader(Members):
         self.readStaffInfo()
         self.applyShift2Member()
         self.readNrdeptcore()
+        self.readConvertTable()
 
     def readConfigvar(self, datPath: str = ''):
-        try:
-            inputData = open(datPath, 'r', encoding='utf-8-sig')
-        except FileNotFoundError as ex:
-            inputData = open(self.rootPath + "\\" +
-                             DatNames.configvar.value, 'r', encoding='utf-8-sig')
-            
-        data = {}
-        # 次のようなデータ構造を想定しています
-        """
+        """次のようなデータ構造を想定しています
         date,2023/04/01
         kappa,150
         iota,12
@@ -50,6 +46,13 @@ class DatReader(Members):
         epsilon,5
         lambda,0.1,0.01,0.01,0.001,0.1
         """
+        try:
+            inputData = open(datPath, 'r', encoding='utf-8-sig')
+        except FileNotFoundError as ex:
+            inputData = open(self.rootPath + "\\" +
+                             DatNames.configvar.value, 'r', encoding='utf-8-sig')
+
+        data = {}
         for row in inputData:
             elem = row.rstrip('\n').split(',')
             data[elem[0]] = elem[1:]
@@ -67,17 +70,13 @@ class DatReader(Members):
         self.next_month = [datetuple for datetuple in cal.itermonthdays4(
             self.date.year, self.date.month+1) if datetuple[1] == self.date.month + 1]
 
-        self.day_previous_next = self.previous_month + self.now_month + [self.next_month[0]]
+        self.now_next_month = self.now_month + [self.next_month[0]]
+
+        self.day_previous_next = self.previous_month + \
+            self.now_month + [self.next_month[0]]
 
     def readStaffInfo(self, datPath: str = ''):
-
-        try:
-            inputData = open(datPath, 'r', encoding='utf-8-sig')
-        except FileNotFoundError as ex:
-            inputData = open(self.rootPath + "\\" +
-                             DatNames.staffinfo.value, 'r', encoding='utf-8-sig')
-        # 次のようなデータ構造を想定しています
-        """
+        """次のようなデータ構造を想定しています
         uid, staffid, name
         2,R04793,小川智
         4,055236,戸高秀晴
@@ -89,6 +88,11 @@ class DatReader(Members):
         10,090670,高橋直紀
         11,109876,平田聡
         """
+        try:
+            inputData = open(datPath, 'r', encoding='utf-8-sig')
+        except FileNotFoundError as ex:
+            inputData = open(self.rootPath + "\\" +
+                             DatNames.staffinfo.value, 'r', encoding='utf-8-sig')
 
         for row in inputData:
             try:
@@ -103,8 +107,7 @@ class DatReader(Members):
     # 先月分とrequestは一括読み込みして、一部分だけほしいときは切り取るやり方にします
     @Validater.validJobPerDay
     def applyShift2Member(self, shiftPath: str = '', previousPath: str = '', requestPath: str = ''):
-        # 次のようなデータ構造を想定しています
-        """
+        """次のようなデータ構造を想定しています
         uid, day, job
         2,0,63
         2,1,10
@@ -115,9 +118,9 @@ class DatReader(Members):
         2,6,8
         """
 
-        self.dat2Member(DatNames.shift, self.now_month)
+        self.dat2Member(DatNames.shift, self.now_next_month)
         self.dat2Member(DatNames.previous, self.previous_month)
-        self.dat2Member(DatNames.request, self.now_month)
+        self.dat2Member(DatNames.request, self.now_next_month)
 
         return self
 
@@ -141,6 +144,8 @@ class DatReader(Members):
                 print(
                     '*.datのdayがカレンダーと一致しませんでした。\n詳細: {ex}\nスキップして次を読み込みます...')
                 continue
+            except IndexError as ex:
+                print(f'{ex}\n{readDatName}\n {int(day)}')
 
             except ValueError as ex:
                 print(f'異常なデータがありました\n詳細: {ex}\nスキップして次を読み込みます...')
@@ -158,22 +163,12 @@ class DatReader(Members):
                 except KeyError as ex:
                     self.members[int(uid)] = Person(uuid4(), f'dummy{uid}')
                     self.members[int(uid)].requestPerDay[date] = job
-            
-
-            
 
         readingDat.close()
-        
-    def readNrdeptcore(self, datPath:str = ''):
-        try:
-            inputData = open(datPath, 'r', encoding='utf-8-sig')
-        except FileNotFoundError as ex:
-            inputData = open(self.rootPath + "\\" +
-                             DatNames.Nrdeptcore.value, 'r', encoding='utf-8-sig')
-            
+
+    def readNrdeptcore(self, datPath: str = ''):
         """
         次のようなデータ構造を想定しています
-        
         uid, dept
         2,MR,0,2,1,2,0,0,0,2,0,0,0
         4,RT,6,0,0,0,0,0,0,0,0,0,0
@@ -185,11 +180,39 @@ class DatReader(Members):
         7,AG,0,0,0,0,0,0,0,2,6,0,0
         8,XO,0,0,0,0,0,1,6,6,0,0,0
         """
-            
+        try:
+            inputData = open(datPath, 'r', encoding='utf-8-sig')
+        except FileNotFoundError as ex:
+            inputData = open(self.rootPath + "\\" +
+                             DatNames.Nrdeptcore.value, 'r', encoding='utf-8-sig')
+
         for row in inputData:
             elem = row.rstrip('\n').split(',')
             self.members[int(elem[0])].dept = elem[1]
-            
+
         inputData.close()
-            
-            
+
+    def readConvertTable(self, datPath: str = ''):
+        """
+        次のようなデータ構造を想定しています
+        A日,0
+        M日,1
+        C日,2
+        F日,3
+        A夜,4
+        M夜,5
+        C夜,6
+        """
+        try:
+            inputData = open(datPath, 'r', encoding='utf-8-sig')
+        except FileNotFoundError as ex:
+            inputData = open(self.rootPath + "\\" +
+                             DatNames.convertTable.value, 'r', encoding='utf-8-sig')
+
+        for row in inputData:
+            try:
+                name, num = row.rstrip('\n').split(',')
+                ConvertTable.convertTable[num] = name #後の変換を楽にするためにあえてnumをkeyに
+            except ValueError as ex:
+                print(f'異常なデータがありました\n詳細: {ex}\nスキップして次を読み込みます...')
+                continue

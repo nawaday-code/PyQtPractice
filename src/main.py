@@ -1,3 +1,4 @@
+import logging
 import sys
 from util.dataSender import DataName
 
@@ -22,7 +23,8 @@ def myFunc()->str:
 ModelDataEditor.callbackFunc = myFunc
 delegate = modelEditDelegate()
 
-shiftInfo.getKinmuForm(DataName.kinmu)
+logging.debug(shiftInfo.getKinmuForm(DataName.kinmu))
+
 shiftInfo.getStaffInfo()
 shiftInfo.getYakinForm()
 

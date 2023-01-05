@@ -4,6 +4,7 @@ import locale
 import logging
 
 import pandas as pd
+from decorator.convertTable import ConvertTable
 
 
 from database.member import Members
@@ -12,17 +13,6 @@ from database.member import Members
 class DataName(Enum):
     kinmu = auto()
     request = auto()
-
-
-class JobName(Enum):
-    AngioNight = '4'
-    MRINight = '5'
-    CTNight = '6'
-    AngioDay = '0'
-    MRIDay = '1'
-    CTDay = '2'
-    Free1 = '3'
-    Free2 = '30'
 
 
 class DataSender(Members):
@@ -59,7 +49,6 @@ class DataSender(Members):
         yakinUnion = {'4', '5', '6', '0', '1', '2', '3', '30'}
         yakinTemp = {day: {job: uid} for uid, person in self.members.items()
                      for day, job in person.jobPerDay.items() if job in yakinUnion}
-        
 
         df = pd.DataFrame(yakinTemp)
         df.where(pd.notnull(df), None, inplace=True)
@@ -68,7 +57,7 @@ class DataSender(Members):
         return df.T
 
     # 本田さん向け
-
+    @ConvertTable.id2Name
     def getKinmuForm(self, dataName: DataName) -> pd.DataFrame:
         """ 
         DataName.kinmu           
@@ -90,7 +79,7 @@ class DataSender(Members):
                               person in self.members.items()})
 
         df.sort_index(axis=0, inplace=True)
-        logging.debug(df.T)
+        # logging.debug(df.T)
         return df.T
 
     def getStaffInfo(self) -> pd.DataFrame:
