@@ -3,20 +3,18 @@ from PyQt5.QtCore import *
 
 
 
-class modelEditDelegate(QStyledItemDelegate):
+class Delegate4Kinmu(QStyledItemDelegate):
     def __init__(self, parent=None):
-        super(modelEditDelegate, self).__init__(parent)
+        super(Delegate4Kinmu, self).__init__(parent)
 
     def createEditor(self, parent, option, index):
         return QLineEdit(parent)
 
-    def setEditorData(self, editor: QAbstractButton, index:QModelIndex):
+    def setEditorData(self, editor: QAbstractButton, index: QModelIndex):
         value = index.model().data(index, Qt.ItemDataRole.DisplayRole)
         editor.setText(value)
 
     def setModelData(self, editor: QAbstractButton, model, index):
         print(f'delegeteでのindex:({index.row()}, {index.column()})')
         model.setData(index, editor.text())
-
         
-

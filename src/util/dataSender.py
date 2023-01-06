@@ -51,7 +51,7 @@ class DataSender(Members):
                      for day, job in person.jobPerDay.items() if job in yakinUnion}
 
         df = pd.DataFrame(yakinTemp)
-        df.where(pd.notnull(df), None, inplace=True)
+        df.where(pd.notnull(df), None, inplace=True)#whereじゃなくreplaceでうまくいくかも
         df.sort_index(axis=1, inplace=True)
         logging.debug(df.T)
         return df.T
@@ -81,6 +81,7 @@ class DataSender(Members):
         df.sort_index(axis=0, inplace=True)
         # logging.debug(df.T)
         return df.T
+
 
     def getStaffInfo(self) -> pd.DataFrame:
         """

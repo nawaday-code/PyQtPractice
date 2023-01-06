@@ -1,5 +1,6 @@
 import logging
 import sys
+from database.model4Kinmu import Model4Kinmu
 from util.dataSender import DataName
 
 
@@ -14,19 +15,17 @@ from controller.delegate import modelEditDelegate
 app = QtWidgets.QApplication(sys.argv)
 shiftInfo = ShiftDataController('data')
 view = TestView()
-model = TestModel(shiftInfo=shiftInfo)
+# model = TestModel(shiftInfo=shiftInfo)
 
-def myFunc()->str:
-    print('オリジナル編集有効化')
-    return ModelDataEditor.preValue + 'だと思う'
 
-ModelDataEditor.callbackFunc = myFunc
+# def myFunc()->str:
+#     print('オリジナル編集有効化')
+#     return ModelDataEditor.preValue + 'だと思う'
+
+# ModelDataEditor.callbackFunc = myFunc
+
+model = Model4Kinmu(shiftInfo=shiftInfo)
 delegate = modelEditDelegate()
-
-logging.debug(shiftInfo.getKinmuForm(DataName.kinmu))
-
-shiftInfo.getStaffInfo()
-shiftInfo.getYakinForm()
 
 testWindow = MainWindow(view, model, delegate)
 testWindow.show()
