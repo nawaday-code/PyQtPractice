@@ -1,38 +1,23 @@
-import datetime
 import logging
+
+from database.member import Members
 
 
 class damagedDataError(Exception):
     pass
 
 
-class PersonType:
-    # 個人の情報
-    uid: int
-    staffid: str
-    name: str
-    jobPerDay: dict
-
-
-class MemberType(PersonType):
-    members: list[PersonType]
-
-    # 全職員で共通な情報
-    date: datetime
-
-    day_previous_next: list[tuple[int, int, int, int]]
-
-
-class Validater:
+class Validater(Members):
     # デコレータとして検証
 
     # データの欠損を検証
     # 汎用性がなく、いい書き方ではない
     @staticmethod
-    def validJobPerDay(func, logger: bool = False):
+    def validJobPerDay(func, logger = False):
         def wrapper(*args, **kwargs):
-            membersInfo: MemberType = func(*args, **kwargs)
-            for person in membersInfo.members:
+            membersInfo: Members = func(*args, **kwargs)
+            
+            for person in membersInfo.members.values():
                 for day in membersInfo.day_previous_next:
                     try:
                         person.jobPerDay[day]
@@ -47,16 +32,16 @@ class Validater:
             return membersInfo
         return wrapper
 
-    # 使い道ないかも↓
-    @staticmethod
-    def validListlen(func, wantLen: int):
-        def wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
-            try:
-                if len(result) != wantLen:
-                    raise damagedDataError()
-            except damagedDataError as _ex:
-                print('データが望まない長さになっています')
-                print('データ長: '+len(result))
-            return result
-        return wrapper
+    # # 使い道ないかも↓
+    # @staticmethod
+    # def validListlen(func, wantLen: int):
+    #     def wrapper(*args, **kwargs):
+    #         result = func(*args, **kwargs)
+    #         try:
+    #             if len(result) != wantLen:
+    #                 raise damagedDataError()
+    #         except damagedDataError as _ex:
+    #             print('データが望まない長さになっています')
+    #             print('データ長: '+len(result))
+    #         return result
+    #     return wrapper
