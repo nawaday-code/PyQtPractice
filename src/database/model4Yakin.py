@@ -1,18 +1,15 @@
 
 from PyQt5.QtCore import *
-from lib.noMetaClassConfrict import classmaker
+from pandas import DataFrame
 
-from util.shiftDataController import ShiftController
-from Event.modelSubjectBase import ChangeDataGenerator, DataForm
+from util.shiftController import ShiftChannel
 
 
-class Model4Yakin(QAbstractTableModel, ChangeDataGenerator):
+class Model4Yakin(QAbstractTableModel):
 
-    __metaclass__ = classmaker()
-
-    def __init__(self, parent=None, shiftInfo: ShiftController = None):
+    def __init__(self, parent=None, shiftCtrlChannel: ShiftChannel = None):
         super().__init__(parent)
-        self.yakinDF = shiftInfo.getYakinForm()
+        self.yakinDF = shiftCtrlChannel.shiftCtrl.getYakinForm()
 
     def data(self, index: QModelIndex, role: int):
         if role == Qt.ItemDataRole.EditRole or role == Qt.ItemDataRole.DisplayRole:
@@ -30,20 +27,11 @@ class Model4Yakin(QAbstractTableModel, ChangeDataGenerator):
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
         if role == Qt.ItemDataRole.EditRole:
-            self.__changedIndex = index
-            self.__changedValue = value
-            self.notifyObseber()
             print(
                 f'データを編集しました。\n箇所: ({index.row()}, {index.column()})\n変更後: {value}')
 
             return True
         return False
 
-    def getIndex(self):
-        return self.__changedIndex
-
-    def getValue(self):
-        return self.__changedValue
-
-    def getForm(self):
-        return DataForm.yakinDF
+    def updateDF(self, newDF: DataFrame):
+        self.yakinDF = newDF

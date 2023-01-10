@@ -20,11 +20,11 @@ class Person:
     requestPerDay: dict[tuple[int, int, int, int], str]
 
     def __init__(self, staffid: str, name: str) -> None:
-        self.staffid= staffid
-        self.name= name
+        self.staffid = staffid
+        self.name = name
         self.jobPerDay = {}
         self.requestPerDay = {}
-        self.dept = None
+        self.dept = ""
 
 
 @dataclass(slots=True)
