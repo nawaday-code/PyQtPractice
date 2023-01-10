@@ -2,12 +2,12 @@ import logging
 
 from PyQt5.QtCore import *
 
-from util.shiftDataController import ShiftDataController
+from util.shiftDataController import ShiftController
 from util.valueEditor import ModelDataEditor
 
 
 class TestModel(QAbstractTableModel):
-    shiftInfo: ShiftDataController
+    shiftInfo: ShiftController
 
     def __init__(self, parent=None, shiftInfo=None):
         super().__init__(parent)

@@ -1,13 +1,10 @@
 import logging
-from PyQt5 import QtWidgets
-
-from view.view import TestView
-from database.model import TestModel
-from controller.delegate import modelEditDelegate
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 
 
-class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, view: TestView, model: TestModel, delegate: modelEditDelegate):
+class MainWindow(QMainWindow):
+    def __init__(self, view: QTableView, model: QAbstractTableModel, delegate: QStyledItemDelegate):
         super().__init__()
 
         self.view = view

@@ -1,13 +1,16 @@
 
 from PyQt5.QtCore import *
-from util.dataSender import DataName
+from lib.noMetaClassConfrict import classmaker
 
-from util.shiftDataController import ShiftDataController
+from util.shiftDataController import ShiftController
 from Event.modelSubjectBase import ChangeDataGenerator, DataForm
+
 
 class Model4Yakin(QAbstractTableModel, ChangeDataGenerator):
 
-    def __init__(self, parent=None, shiftInfo: ShiftDataController = None):
+    __metaclass__ = classmaker()
+
+    def __init__(self, parent=None, shiftInfo: ShiftController = None):
         super().__init__(parent)
         self.yakinDF = shiftInfo.getYakinForm()
 
@@ -31,8 +34,8 @@ class Model4Yakin(QAbstractTableModel, ChangeDataGenerator):
             self.__changedValue = value
             self.notifyObseber()
             print(
-                f'データを編集しました。\n箇所: ({index.row()}, {index.column()})\n変更後: {self.shiftInfo.members[index.row()].jobPerDay[self.shiftInfo.day_previous_next[index.column()]]}')
-            
+                f'データを編集しました。\n箇所: ({index.row()}, {index.column()})\n変更後: {value}')
+
             return True
         return False
 

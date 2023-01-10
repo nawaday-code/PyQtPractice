@@ -1,19 +1,18 @@
 
 from PyQt5.QtCore import *
-from lib.noMetaClassConfrict import classmaker
 from util.dataSender import DataName
 
-from util.shiftDataController import ShiftDataController
-from Event.modelSubjectBase import ChangeDataGenerator, DataForm
+from util.shiftDataController import ShiftController
 
 
-class Model4Kinmu(QAbstractTableModel, ChangeDataGenerator):
-    
-    __metaclass__ = classmaker()
+class Model4Kinmu(QAbstractTableModel):
 
-    def __init__(self, parent=None, shiftInfo: ShiftDataController = None):
+    changeTrigger = pyqtSignal(QModelIndex, str, str)
+
+    def __init__(self, parent=None, shiftInfo: ShiftController = None):
         super().__init__(parent)
         self.kinmuDF = shiftInfo.getKinmuForm(DataName.kinmu)
+        self.changeTrigger.connect(shiftInfo.updateMember)
 
     def data(self, index: QModelIndex, role: int):
         if role == Qt.ItemDataRole.EditRole or role == Qt.ItemDataRole.DisplayRole:
@@ -31,21 +30,12 @@ class Model4Kinmu(QAbstractTableModel, ChangeDataGenerator):
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
         if role == Qt.ItemDataRole.EditRole:
-            self.__changedIndex = index
-            self.__changedValue = value
-            self.notifyObseber()
-            #変更後のデータをモデルDFに入れる
-            self.kinmuDF.iat[index.row(), index.column()] = value #ここMemberDatabaseから引っ張ってくる
+            self.changeTrigger.emit(index, value, self.__class__.__name__)
+
+            # 変更後のデータをモデルDFに入れる
+            # ここMemberDatabaseから引っ張ってくる
+            self.kinmuDF.iat[index.row(), index.column()] = value
             print(
                 f'データを編集しました。\n箇所: ({index.row()}, {index.column()})\n変更後: {value}')
             return True
         return False
-
-    def getIndex(self):
-        return self.__changedIndex
-
-    def getValue(self):
-        return self.__changedValue
-
-    def getForm(self):
-        return DataForm.kinmuDF

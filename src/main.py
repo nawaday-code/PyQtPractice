@@ -1,19 +1,16 @@
 import logging
 import sys
 from database.model4Kinmu import Model4Kinmu
-from util.dataSender import DataName
 
 
-from util.shiftDataController import ShiftDataController
-from util.valueEditor import ModelDataEditor
+from util.shiftDataController import ShiftController
 from view.mainWindow import MainWindow
 from view.view import *
-from database.model import TestModel
 from controller.delegate import modelEditDelegate
 
 
 app = QtWidgets.QApplication(sys.argv)
-shiftInfo = ShiftDataController('data')
+shiftInfo = ShiftController('data')
 view = TestView()
 # model = TestModel(shiftInfo=shiftInfo)
 
