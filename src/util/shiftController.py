@@ -30,18 +30,19 @@ class ShiftChannel(memberUpdateGenerator):
         """
         if fromClass == "Model4Kinmu":
             print(f'呼び出されました:{self.updateMember.__name__}')
-            self.shiftCtrl.members[index.row(
-            )].jobPerDay[self.shiftCtrl.day_previous_next[index.column()]] = value
+            uidList = list(self.shiftCtrl.members.keys())
+            self.shiftCtrl.members[uidList[index.row(
+            )]].jobPerDay[self.shiftCtrl.day_previous_next[index.column()]] = value
             self.notifyObseber()
         # できてるっぽいけど、indexがずれる ↑に4つあがったところに入力される
-        # どうしてこうなった
-        # 　どうしてこうなった
+        # => 修正済み。
+        # なおった
+        # 　なおった
         # `_＿＿  ♪　∧ ∧ ∩
         # /∥￣∥　r(^ ω ^)ノ
         # L∥＿∥  └┐　   レ―､
         # |￣＼三 /￣/　＿ノ⌒
         # |　 ｜/　/(_(　　♪
-        # 　後々詳しくみる予定
 
     def getKinmuDF(self):
         print(f'呼び出されました:{self.getKinmuDF.__name__}')

@@ -14,5 +14,4 @@ class modelEditDelegate(QStyledItemDelegate):
         editor.setText(value)
 
     def setModelData(self, editor: QAbstractButton, model, index):
-        print(f'delegeteでのindex:({index.row()}, {index.column()})')
         model.setData(index, editor.text())
